@@ -124,7 +124,8 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px; }
 .net .link.l2 { stroke-dasharray: 3 4; opacity: .7; }
 .net .link.on { stroke: var(--ink-2); stroke-width: 2; }
 .net .link.route { stroke: var(--accent); stroke-width: 3; stroke-dasharray: none; opacity: 1; }
-.net .node { cursor: pointer; }
+.net .node { cursor: pointer; outline: none; }
+.net .node:focus-visible circle { stroke: var(--accent); stroke-width: 4; }
 .net .node circle { stroke: var(--panel); stroke-width: 2.5; transition: r .2s; }
 .net .node.up circle { fill: var(--accent); } .net .node.same circle { fill: var(--same); } .net .node.down circle { fill: var(--down); }
 .net .node.l2 circle { opacity: .55; }

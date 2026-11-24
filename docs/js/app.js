@@ -1,6 +1,6 @@
-import { boot, query, on, log, status } from './db.js?v=2';
-import { ZONES } from './queries.js?v=2';
-import { createNetwork } from './viz.js?v=2';
+import { boot, query, on, log, status } from './db.js?v=3';
+import { ZONES } from './queries.js?v=3';
+import { createNetwork } from './viz.js?v=3';
 
 const $ = (s, el = document) => el.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));

@@ -21,13 +21,19 @@ export function createNetwork(el, { onPick, onExplore, tip }) {
   let routeCodes = new Set();
   let routeEdges = new Set();
 
-  svg.call(d3.zoom().scaleExtent([0.5, 2.5]).on('zoom', (e) => root.attr('transform', e.transform)));
+  // Wheel zoom only with Ctrl/⌘ (or a trackpad pinch, which sends ctrlKey), so normal scrolling
+  // keeps scrolling the page instead of panning the graph away.
+  const zoom = d3.zoom().scaleExtent([0.5, 2.5])
+    .filter((e) => (e.type === 'wheel' ? e.ctrlKey || e.metaKey : !e.button))
+    .on('zoom', (e) => root.attr('transform', e.transform));
+  svg.call(zoom).on('dblclick.zoom', null);
 
   function size() { const r = el.getBoundingClientRect(); return { w: r.width || 800, h: r.height || 500 }; }
 
   function update(data) {
     const { w, h } = size();
     svg.attr('viewBox', `${-w / 2} ${-h / 2} ${w} ${h}`);
+    svg.call(zoom.transform, d3.zoomIdentity);
     const R1 = Math.min(w, h) * 0.3; const R2 = Math.min(w, h) * 0.46;
     const nodes = [{ id: data.center, title: data.centerTitle, zone: data.centerZone, level: 0, fx: 0, fy: 0 }];
     const links = [];
