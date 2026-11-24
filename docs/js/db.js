@@ -1,7 +1,7 @@
 // Main-thread client for the Relate worker. Every query is logged for the "Under the hood" drawer.
-import { Q } from './queries.js?v=8';
+import { Q } from './queries.js?v=9';
 
-const worker = new Worker(new URL('./worker.js?v=8', import.meta.url), { type: 'module' });
+const worker = new Worker(new URL('./worker.js?v=9', import.meta.url), { type: 'module' });
 const pending = new Map();
 const listeners = new Set();
 let seq = 0;
@@ -29,7 +29,7 @@ function emit(m) { for (const fn of listeners) fn(m); }
 export function on(fn) { listeners.add(fn); return () => listeners.delete(fn); }
 
 export function boot() {
-  worker.postMessage({ type: 'boot', graphUrl: new URL('../graph.json', import.meta.url).href });
+  worker.postMessage({ type: 'boot', graphUrl: new URL('../graph.json?v=9', import.meta.url).href });
 }
 
 export function query(name, params = {}) {
