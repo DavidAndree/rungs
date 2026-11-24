@@ -4,7 +4,9 @@ import * as d3 from 'https://cdn.jsdelivr.net/npm/d3@7.9.0/+esm';
 
 const kind = (climb) => (climb > 0 ? 'up' : climb < 0 ? 'down' : 'same');
 const short = (t, n = 26) => {
-  let s = t.split(/,| and | or /)[0].trim();
+  // "Cooks, Fast Food" -> "Fast Food Cooks", so sibling jobs stay distinguishable.
+  const parts = t.split(', ');
+  let s = parts.length === 2 && parts[1].length <= 22 ? `${parts[1]} ${parts[0]}` : t.split(/,| and | or /)[0].trim();
   if (s.length > n) s = s.slice(0, n - 1).trimEnd() + '…';
   return s;
 };
@@ -34,7 +36,8 @@ export function createNetwork(el, { onPick, onExplore, tip }) {
     const { w, h } = size();
     svg.attr('viewBox', `${-w / 2} ${-h / 2} ${w} ${h}`);
     svg.call(zoom.transform, d3.zoomIdentity);
-    const R1 = Math.min(w, h) * 0.3; const R2 = Math.min(w, h) * 0.46;
+    const small = w < 600;
+    const R1 = Math.min(w, h) * (small ? 0.2 : 0.3); const R2 = Math.min(w, h) * (small ? 0.42 : 0.46);
     const nodes = [{ id: data.center, title: data.centerTitle, zone: data.centerZone, level: 0, fx: 0, fy: 0 }];
     const links = [];
     const seen = new Set([data.center]);
@@ -83,7 +86,7 @@ export function createNetwork(el, { onPick, onExplore, tip }) {
       .attr('aria-label', (d) => d.level ? `${d.title}, ${kind(d.climb) === 'up' ? 'a step up' : kind(d.climb) === 'down' ? 'less preparation' : 'same level'}. Gap ${Math.round(d.gap)}.` : `Your job: ${d.title}`);
     nodeAll.select('circle').attr('r', (d) => (d.level === 0 ? 22 : d.level === 1 ? 7 + 9 * (1 - Math.min(1, d.gap / maxGap)) : 5));
     nodeAll.select('text')
-      .text((d) => (d.level === 0 ? short(d.title, 30) : short(d.title, d.level === 1 ? 26 : 20)))
+      .text((d) => (d.level === 0 ? short(d.title, w < 600 ? 22 : 30) : short(d.title, d.level === 1 ? (w < 600 ? 15 : 26) : 20)))
       .attr('text-anchor', (d) => (d.level === 0 ? 'middle' : Math.cos(d.angle) >= 0 ? 'start' : 'end'))
       .attr('dx', (d) => (d.level === 0 ? 0 : Math.cos(d.angle) >= 0 ? 12 : -12))
       .attr('dy', (d) => (d.level === 0 ? 42 : 4));

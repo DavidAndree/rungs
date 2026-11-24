@@ -1,7 +1,7 @@
 // Main-thread client for the Relate worker. Every query is logged for the "Under the hood" drawer.
-import { Q } from './queries.js?v=3';
+import { Q } from './queries.js?v=8';
 
-const worker = new Worker(new URL('./worker.js?v=3', import.meta.url), { type: 'module' });
+const worker = new Worker(new URL('./worker.js?v=8', import.meta.url), { type: 'module' });
 const pending = new Map();
 const listeners = new Set();
 let seq = 0;

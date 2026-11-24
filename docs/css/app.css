@@ -234,7 +234,9 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px; }
   #btn-hood .label { display: none; }
   .how-grid { grid-template-columns: 1fr; }
   .search kbd { display: none; }
-  .net { height: 380px; }
+  .net { height: 400px; }
+  .net .node.l2 text { display: none; }
+  .net .node text { font-size: 10.5px; }
   .card-head h3, .me-card h3 { font-size: 22px; }
 }
 @media (prefers-reduced-motion: reduce) {

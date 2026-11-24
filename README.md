@@ -41,11 +41,11 @@ That's a relationships question:
 
 (:Occupation)-[:NEEDS {importance, level}]->(:Skill)            40,236
 (:Occupation)-[:USES {inDemand}]->(:Software)                   11,412
-(:Occupation)-[:RELATED {tier, rank}]->(:Occupation)            17,776  O*NET's own relatedness
+(:Occupation)-[:RELATED {tier, rank, gap, climb, newSkills}]->(:Occupation)  8,900  O*NET's curated related jobs (primary tiers)
 (:Occupation)-[:STEP {similarity, gap, climb, newSkills}]->(:Occupation)  15,486  realistic moves
 ```
 
-`STEP` edges are computed in `scripts/build_graph.py`. For each job: its 12 most similar jobs (cosine similarity of importance×level skill vectors), plus its 6 closest jobs exactly one Job Zone up, so upward moves always exist. A move never climbs more than one Job Zone. `gap` sums the missing skill levels weighted by importance, and `newSkills` lists the skills to build.
+Two kinds of move edge feed the dream-job ladder. `RELATED` edges are O*NET analysts' own related-occupation lists, which capture field pivots such as orderly → nursing assistant. `STEP` edges are computed in `scripts/build_graph.py`. For each job: its 12 most similar jobs (cosine similarity of importance×level skill vectors), plus its 6 closest jobs exactly one Job Zone up, so upward moves always exist. A move never climbs more than one Job Zone. `gap` sums the missing skill levels weighted by importance, and `newSkills` lists the skills to build.
 
 ### The Cypher behind each feature
 
@@ -54,7 +54,7 @@ All app queries live in [`docs/js/queries.js`](docs/js/queries.js) and appear ve
 | Feature | Relate feature used | Typical time (WASM) |
 |---|---|---|
 | Next rungs, re-scored live from skills you mark as yours | `CALL (me, t) { … }` scoped subqueries, `OPTIONAL MATCH`, list params | ~50 ms |
-| Dream-job ladder | `SHORTEST 16 (me)-[:STEP]->{1,6}(goal)` quantified path pattern, loops filtered with `single()` | 2–15 ms |
+| Dream-job ladder | `SHORTEST 48 (me)-[:STEP\|RELATED]->{1,6}(goal)` over two edge types, loops filtered with `single()`, then each stepping stone scored by its own skill gap to the goal in a `CALL` subquery | ~0.5 s |
 | Career neighborhood graph | two-hop expansion with per-hop `ORDER BY … LIMIT` | ~10 ms |
 | Keystone skills | two-hop reach, then a `NEEDS` deficit count | ~100 ms |
 | Search over ~54,000 job titles | list predicates over `titles` | ~50 ms |
@@ -112,7 +112,7 @@ npm install && npm test                      # loads graph.json into Relate WASM
 
 | Path | What |
 |---|---|
-| **`data/rungs.rl`** | **The persistent Relate store**: single-file bundle, about 85,000 relationships |
+| **`data/rungs.rl`** | **The persistent Relate store**: single-file bundle, about 76,000 relationships |
 | `docs/graph.json` | The same graph as JSON, loaded into Relate WASM by the web app |
 | `queries/*.cypher` | Ready-to-run CLI queries |
 | `scripts/build_graph.py` | O*NET → graph build, including `STEP` edge computation |
@@ -128,6 +128,7 @@ npm install && npm test                      # loads graph.json into Relate WASM
 
 - O*NET describes national occupations, not specific employers or local openings. Rungs shows where you *could* go, not who's hiring.
 - Wage data (BLS OEWS) isn't included yet. It's the top next step, so moves can be ranked by pay gain.
+- Some careers are entered through apprenticeships or licensing (for example, electricians), which a skills dataset can't see, so a few routes take unusual stepping stones. The "Under the hood" drawer shows exactly why each route was chosen.
 - Skill gaps use O*NET's 0–7 level scale. They're a guide for what to learn, not a hiring guarantee.
 - The first browser load downloads ~0.8 MB of graph data plus the ~7 MB Relate WASM engine. Both are cached afterwards.
 

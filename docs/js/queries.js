@@ -63,17 +63,27 @@ RETURN me.code AS center, me.title AS centerTitle, me.jobZone AS centerZone,
   },
 
   routes: {
-    needs: 'moves',
-    about: 'Dream-job ladder: the shortest chains of realistic moves from you to your goal, ranked by total skill gap plus a small cost per job change.',
+    needs: 'full',
+    about: 'Dream-job ladder: candidate chains over skill-match moves (STEP) and O*NET\'s curated related occupations (RELATED), ranked by the skills each move needs plus how close every stepping stone gets you to the goal.',
     cypher: `MATCH (me:Occupation {code: $from}), (goal:Occupation {code: $to})
-MATCH p = SHORTEST 16 (me)-[:STEP]->{1,6}(goal)
-WITH p, nodes(p) AS ns
+MATCH p = SHORTEST 48 (me)-[:STEP|RELATED]->{1,6}(goal)
+WITH goal, p, nodes(p) AS ns
 WHERE all(x IN ns WHERE single(y IN ns WHERE y = x))
-WITH p, reduce(g = 0.0, r IN relationships(p) | g + r.gap) AS total
-RETURN [n IN nodes(p) | {code: n.code, title: n.title, zone: n.jobZone}] AS rungs,
-       [r IN relationships(p) | {gap: r.gap, learn: r.newSkills[0..3]}] AS moves,
-       round(total, 1) AS total
-ORDER BY total + 5 * size(rungs)
+WITH goal, p, ns, reduce(g = 0.0, r IN relationships(p) | g + r.gap) AS hops
+CALL (goal, ns) {
+  UNWIND ns[1..-1] AS x
+  MATCH (goal)-[n:NEEDS]->(k:Skill) WHERE n.importance >= 2.75
+  OPTIONAL MATCH (x)-[m:NEEDS]->(k)
+  WITH x, sum(CASE WHEN n.level > coalesce(m.level, 0.0)
+                   THEN (n.level - coalesce(m.level, 0.0)) * n.importance / 5 ELSE 0.0 END) AS toGoal
+  RETURN coalesce(avg(toGoal), 0.0) AS detour
+}
+WITH [n IN ns | {code: n.code, title: n.title, zone: n.jobZone}] AS rungs,
+     [r IN relationships(p) | {gap: r.gap, learn: r.newSkills[0..3], via: type(r)}] AS moves,
+     hops, hops + 0.8 * detour + 4 * size(ns) AS score
+WITH rungs, min(score) AS score, head(collect(moves)) AS moves, min(hops) AS total
+RETURN rungs, moves, round(total, 1) AS total
+ORDER BY score
 LIMIT 3`,
   },
 

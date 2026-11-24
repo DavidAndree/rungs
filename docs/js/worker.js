@@ -1,5 +1,5 @@
 // Relate (WebAssembly) runs here, off the main thread, so the page stays smooth while
-// ~85,000 relationships load. The main thread talks to it with {id, cypher, params} messages.
+// ~76,000 relationships load. The main thread talks to it with {id, cypher, params} messages.
 import init, { RelateDb } from 'https://cdn.jsdelivr.net/npm/@relate/relate-wasm@1.2.0/relate.js';
 
 let db = null;
@@ -20,7 +20,7 @@ const LOAD = [
   { stage: 'skills', label: 'Connecting skill requirements', key: 'needs', cypher: 'UNWIND $rows AS r MATCH (o:Occupation {code: r.code}), (s:Skill {id: r.id}) CREATE (o)-[:NEEDS {importance: r.importance, level: r.level}]->(s)' },
   { stage: 'full', label: 'Adding in-demand software', key: 'software', rowsOf: (g) => g.software, cypher: 'UNWIND $rows AS r CREATE (:Software {name: r})' },
   { stage: 'full', label: 'Connecting software', key: 'uses', cypher: 'UNWIND $rows AS r MATCH (o:Occupation {code: r.code}), (s:Software {name: r.name}) CREATE (o)-[:USES {inDemand: r.inDemand}]->(s)' },
-  { stage: 'full', label: 'Adding O*NET related occupations', key: 'related', cypher: 'UNWIND $rows AS r MATCH (a:Occupation {code: r.a}), (b:Occupation {code: r.b}) CREATE (a)-[:RELATED {tier: r.tier, rank: r.rank}]->(b)' },
+  { stage: 'full', label: 'Adding O*NET related occupations', key: 'related', cypher: 'UNWIND $rows AS r MATCH (a:Occupation {code: r.a}), (b:Occupation {code: r.b}) CREATE (a)-[:RELATED {tier: r.tier, rank: r.rank, gap: r.gap, climb: r.climb, newSkills: r.newSkills}]->(b)' },
 ];
 
 async function boot(graphUrl) {

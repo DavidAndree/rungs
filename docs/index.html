@@ -4,14 +4,14 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Rungs</title>
-  <meta name="description" content="Find the next rung in your career. Rungs maps 910 occupations and 85,000 skill relationships from O*NET into a Relate graph that runs in your browser, then finds realistic moves, multi-step routes to a dream job, and the skills that unlock the most doors." />
+  <meta name="description" content="Find the next rung in your career. Rungs maps 910 occupations and 76,000 relationships from O*NET into a Relate graph that runs in your browser, then finds realistic moves, multi-step routes to a dream job, and the skills that unlock the most doors." />
   <meta property="og:title" content="Rungs — your next job is closer than you think" />
   <meta property="og:description" content="A career graph that runs in your browser on Relate by Neo4j." />
   <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/app.css?v=3" />
+  <link rel="stylesheet" href="css/app.css?v=8" />
   <script>try { const t = localStorage.getItem('rungs:theme'); if (t) document.documentElement.dataset.theme = t; } catch {}</script>
 </head>
 <body>
@@ -140,7 +140,7 @@
       <div class="how-grid">
         <div class="card"><b>1</b><h3>Every job is a node</h3><p>910 O*NET occupations connect to 68 skills and knowledge areas (<code>NEEDS</code>, with importance and level) and 176 in-demand tools (<code>USES</code>).</p></div>
         <div class="card"><b>2</b><h3>Moves are edges</h3><p>15,486 <code>STEP</code> edges link jobs with overlapping skill profiles, never more than one training level up, each carrying the skill gap.</p></div>
-        <div class="card"><b>3</b><h3>Routes are paths</h3><p><code>SHORTEST 16 (me)-[:STEP]-&gt;{1,6}(goal)</code> finds stepping-stone careers (loops filtered out), ranked by the total skills you'd need to build.</p></div>
+        <div class="card"><b>3</b><h3>Routes are paths</h3><p><code>SHORTEST 48 (me)-[:STEP|RELATED]-&gt;{1,6}(goal)</code> finds stepping-stone careers over skill matches and O*NET's curated related jobs, ranked by skills to build and how close each rung gets you.</p></div>
         <div class="card"><b>4</b><h3>It's personal</h3><p>Mark skills you already have and every gap is recomputed live in Cypher: no server, all inside Relate running in this tab.</p></div>
       </div>
     </section>
@@ -160,6 +160,6 @@
   </footer>
 
   <div class="tip" id="tip" role="tooltip" hidden></div>
-  <script type="module" src="js/app.js?v=3"></script>
+  <script type="module" src="js/app.js?v=8"></script>
 </body>
 </html>

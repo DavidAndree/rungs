@@ -108,21 +108,26 @@ def compute_steps(occ, skills, needs):
         picked = {b for _, b in chosen}
         chosen += [(s, b) for s, b in cands if occ[b]['jobZone'] == za + 1 and b not in picked][:CLIMBS_PER_OCC]
         for sim, b in chosen:
-            gap = 0.0
-            new = []
-            for e, need in needs[b].items():
-                if need['importance'] < MIN_IMPORTANCE:
-                    continue
-                have = needs[a].get(e, {}).get('level', 0)
-                deficit = need['level'] - have
-                if deficit > 0:
-                    gap += deficit * need['importance'] / 5
-                if deficit >= GAP_LEVEL:
-                    new.append((deficit * need['importance'], skills[e]['name']))
-            new.sort(reverse=True)
-            steps.append({'from': a, 'to': b, 'similarity': round(sim, 4), 'gap': round(gap, 2),
-                          'climb': occ[b]['jobZone'] - za, 'newSkills': [n for _, n in new[:6]]})
+            gap, new = transition(a, b, skills, needs)
+            steps.append({'from': a, 'to': b, 'similarity': round(sim, 4), 'gap': gap,
+                          'climb': occ[b]['jobZone'] - za, 'newSkills': new})
     return steps
+
+
+def transition(a, b, skills, needs):
+    """Skill gap of moving from job a to job b: missing levels on b's important skills, weighted by importance."""
+    gap = 0.0
+    new = []
+    for e, need in needs[b].items():
+        if need['importance'] < MIN_IMPORTANCE:
+            continue
+        deficit = need['level'] - needs[a].get(e, {}).get('level', 0)
+        if deficit > 0:
+            gap += deficit * need['importance'] / 5
+        if deficit >= GAP_LEVEL:
+            new.append((deficit * need['importance'], skills[e]['name']))
+    new.sort(reverse=True)
+    return round(gap, 2), [n for _, n in new[:6]]
 
 
 def batches(items, n=500):
@@ -141,7 +146,15 @@ def main():
                  for c in occ for e, v in needs[c].items() if v['importance'] >= STORE_IMPORTANCE]
     sw_names = sorted({s for c in software for s in software[c]})
     use_rows = [{'code': c, 'name': s, 'inDemand': d} for c in software for s, d in software[c].items()]
-    rel_rows = [{'a': a, 'b': b, 'tier': t, 'rank': i} for a, b, t, i in related]
+    # O*NET's analyst-curated related occupations (primary tiers only) also carry a gap, so
+    # dream-job routes can pivot into a new field the way career changers really do.
+    rel_rows = []
+    for a, b, t, i in related:
+        if t == 'Supplemental':
+            continue
+        gap, new = transition(a, b, skills, needs)
+        rel_rows.append({'a': a, 'b': b, 'tier': t, 'rank': i, 'gap': gap,
+                         'climb': occ[b]['jobZone'] - occ[a]['jobZone'], 'newSkills': new})
     occ_rows = [{k: o[k] for k in ('code', 'title', 'description', 'jobZone', 'titles')} for o in occ.values()]
 
     # Same payload drives the browser (WASM) load, so both surfaces hold the identical graph.
@@ -178,7 +191,7 @@ def load_statements():
         lambda p: ('software', 'UNWIND $rows AS r CREATE (:Software {name: r})', p['software']),
         lambda p: ('NEEDS', 'UNWIND $rows AS r MATCH (o:Occupation {code: r.code}), (s:Skill {id: r.id}) CREATE (o)-[:NEEDS {importance: r.importance, level: r.level}]->(s)', p['needs']),
         lambda p: ('USES', 'UNWIND $rows AS r MATCH (o:Occupation {code: r.code}), (s:Software {name: r.name}) CREATE (o)-[:USES {inDemand: r.inDemand}]->(s)', p['uses']),
-        lambda p: ('RELATED', 'UNWIND $rows AS r MATCH (a:Occupation {code: r.a}), (b:Occupation {code: r.b}) CREATE (a)-[:RELATED {tier: r.tier, rank: r.rank}]->(b)', p['related']),
+        lambda p: ('RELATED', 'UNWIND $rows AS r MATCH (a:Occupation {code: r.a}), (b:Occupation {code: r.b}) CREATE (a)-[:RELATED {tier: r.tier, rank: r.rank, gap: r.gap, climb: r.climb, newSkills: r.newSkills}]->(b)', p['related']),
         lambda p: ('STEP', 'UNWIND $rows AS r MATCH (a:Occupation {code: r.from}), (b:Occupation {code: r.to}) CREATE (a)-[:STEP {similarity: r.similarity, gap: r.gap, climb: r.climb, newSkills: r.newSkills}]->(b)', p['steps']),
     ]
 

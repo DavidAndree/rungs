@@ -1,6 +1,6 @@
-import { boot, query, on, log, status } from './db.js?v=3';
-import { ZONES } from './queries.js?v=3';
-import { createNetwork } from './viz.js?v=3';
+import { boot, query, on, log, status } from './db.js?v=8';
+import { ZONES } from './queries.js?v=8';
+import { createNetwork } from './viz.js?v=8';
 
 const $ = (s, el = document) => el.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -135,7 +135,7 @@ async function renderKeystones() {
 
 async function renderRoutes() {
   const wrap = $('#ladder');
-  wrap.innerHTML = '<p class="empty">Relate is searching paths…</p>';
+  wrap.innerHTML = '<p class="empty">Relate is comparing up to 48 candidate paths…</p>';
   const rows = await query('routes', { from: state.code, to: state.goal });
   if (!rows.length) {
     wrap.innerHTML = '<p class="empty">No route within six realistic moves. That usually means a different field entirely; try a goal closer to your skills, or a stepping-stone job first.</p>';
@@ -146,7 +146,7 @@ async function renderRoutes() {
       <div class="route-head"><b>${i === 0 ? 'Best route' : `Route ${i + 1}`}</b><span>${r.rungs.length - 1} move${r.rungs.length === 2 ? '' : 's'} · gap ${r.total}</span></div>
       <ol class="ladder">${r.rungs.map((n, j) => `
         <li class="rung${j === 0 ? ' start' : ''}${j === r.rungs.length - 1 ? ' goal' : ''}" style="animation-delay:${j * 90}ms">
-          <b>${esc(n.title)}</b><span class="z">${j === 0 ? 'You are here · ' : ''}${ZONES[n.zone]?.short}</span>
+          <b>${esc(n.title)}</b><span class="z">${j === 0 ? `You are here · ${ZONES[n.zone]?.short}` : `${ZONES[n.zone]?.short} · ${r.moves[j - 1].via === 'RELATED' ? 'O*NET related job' : 'skill match'}`}</span>
           ${j > 0 ? `<div class="learn">${(r.moves[j - 1].learn || []).map((s) => `<span class="tag">${esc(s)}</span>`).join('') || '<span class="tag ok">Ready</span>'}</div>` : ''}
         </li>`).join('')}</ol>
     </div>`).join('')}</div>`;
