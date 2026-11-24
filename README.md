@@ -7,6 +7,10 @@
 
 Built for the [Relate by Neo4j Hackathon](https://relate.devpost.com/), "Context, connected."
 
+![Rungs: your career neighborhood, with every Cypher query shown live](docs/assets/screenshot-network.jpg)
+
+![Dream-job ladder: warehouse worker to registered nurse](docs/assets/screenshot-ladder.jpg)
+
 ---
 
 ## Use case
