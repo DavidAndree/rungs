@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rungs</title>
+  <meta name="description" content="Find the next rung in your career. Rungs maps 910 occupations and 85,000 skill relationships from O*NET into a Relate graph that runs in your browser, then finds realistic moves, multi-step routes to a dream job, and the skills that unlock the most doors." />
+  <meta property="og:title" content="Rungs — your next job is closer than you think" />
+  <meta property="og:description" content="A career graph that runs in your browser on Relate by Neo4j." />
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/app.css?v=2" />
+  <script>try { const t = localStorage.getItem('rungs:theme'); if (t) document.documentElement.dataset.theme = t; } catch {}</script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="top">
+    <a class="brand" href="#" id="home" aria-label="Rungs home">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M9 3v26M23 3v26" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><path d="M9 9h14M9 16h14" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" opacity=".45"/><path d="M9 23h14" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"/></svg>
+      <span>Rungs</span>
+    </a>
+    <div class="engine" id="engine" title="The graph database runs inside this tab">
+      <span class="pulse"></span><span id="engine-text">Starting Relate…</span>
+    </div>
+    <nav class="top-actions">
+      <button class="btn ghost" id="btn-hood" aria-expanded="false" aria-controls="hood">
+        <span class="mono">{ }</span> Under the hood <span class="count" id="hood-count">0</span>
+      </button>
+      <button class="icon-btn" id="btn-theme" aria-label="Toggle light or dark theme">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z" fill="currentColor"/></svg>
+      </button>
+    </nav>
+  </header>
+
+  <main id="main">
+    <!-- LANDING -->
+    <section class="hero" id="hero">
+      <div class="hero-copy">
+        <p class="kicker">Career graph · 910 jobs · runs in your browser</p>
+        <h1>Your next job is <em>closer</em> than you think.</h1>
+        <p class="lede">Tell Rungs the job you have. It walks a graph of every U.S. occupation and the skills they share to find the moves you can actually make, the shortest route to the job you want, and the one skill that opens the most doors.</p>
+
+        <div class="search" role="combobox" aria-expanded="false" aria-owns="search-list" aria-haspopup="listbox" id="search-box">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="m20 20-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <input id="search" type="search" autocomplete="off" spellcheck="false" placeholder="Your current or last job — e.g. cashier, barista, line cook" aria-label="Your current or last job" aria-autocomplete="list" aria-controls="search-list" />
+          <kbd>/</kbd>
+          <ul class="results" id="search-list" role="listbox" hidden></ul>
+        </div>
+        <div class="chips" id="quick">
+          <span>Try</span>
+          <button data-code="41-2011.00">Cashier</button>
+          <button data-code="53-7062.00">Warehouse worker</button>
+          <button data-code="43-4051.00">Customer service rep</button>
+          <button data-code="35-2014.00">Line cook</button>
+          <button data-code="25-9042.00">Teaching assistant</button>
+          <button data-code="53-3032.00">Truck driver</button>
+        </div>
+      </div>
+
+      <div class="hero-art" aria-hidden="true">
+        <svg viewBox="0 0 420 420" id="hero-svg"></svg>
+        <div class="loader card" id="loader">
+          <div class="loader-head"><b id="load-label">Starting Relate (WebAssembly)</b><span id="load-pct">0%</span></div>
+          <div class="bar"><i id="load-bar"></i></div>
+          <p class="fine" id="load-sub">Building the graph in this tab: no server, no sign-up.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- DASHBOARD -->
+    <section class="dash" id="dash" hidden>
+      <div class="dash-head">
+        <div>
+          <p class="kicker" id="me-zone"></p>
+          <h2 id="me-title"></h2>
+          <p class="aka" id="me-aka"></p>
+        </div>
+        <div class="dash-actions">
+          <button class="btn" id="btn-have" aria-expanded="false" aria-controls="have-panel">+ Skills I already have <span class="count" id="have-count">0</span></button>
+          <button class="btn ghost" id="btn-change">Change job</button>
+        </div>
+      </div>
+
+      <div class="have-panel card" id="have-panel" hidden>
+        <p class="sub">From school, side gigs, volunteering, hobbies… Rungs recomputes every gap with these counted as yours.</p>
+        <div id="have-groups"></div>
+      </div>
+
+      <div class="grid">
+        <article class="card net-card">
+          <div class="card-head">
+            <h3>Your career neighborhood</h3>
+            <div class="legend"><span><i class="up"></i>Step up</span><span><i class="same"></i>Same level</span><span><i class="down"></i>Less prep</span></div>
+          </div>
+          <div class="net" id="net"></div>
+          <p class="hint">Click a job to see what it takes · double-click to explore from there</p>
+        </article>
+
+        <aside class="card me-card">
+          <h3>What your job already trains</h3>
+          <ul class="fingerprint" id="fingerprint"></ul>
+          <h3 class="mt">Keystone skills for you</h3>
+          <p class="sub">Job-specific skills that unlock the most moves within two steps.</p>
+          <ul class="keystones" id="keystones"></ul>
+        </aside>
+      </div>
+
+      <article class="card goal-card" id="goal-card">
+        <div class="card-head">
+          <div>
+            <h3>Dream-job ladder</h3>
+            <p class="sub">Pick any job. Relate finds the shortest chains of realistic moves to get there.</p>
+          </div>
+          <div class="search small" id="goal-box">
+            <input id="goal" type="search" autocomplete="off" placeholder="Where do you want to end up? e.g. nurse, electrician, analyst" aria-label="Goal job" aria-controls="goal-list" />
+            <ul class="results" id="goal-list" role="listbox" hidden></ul>
+          </div>
+        </div>
+        <div id="ladder" class="ladder-wrap"><p class="empty">Set a goal above, or press “Set as goal” on any move below.</p></div>
+      </article>
+
+      <article class="card moves-card">
+        <div class="card-head">
+          <h3>Next rungs <span class="sub" id="moves-sub"></span></h3>
+          <div class="tabs" role="tablist" id="move-tabs">
+            <button role="tab" aria-selected="true" data-f="all">All moves</button>
+            <button role="tab" aria-selected="false" data-f="up">Step up</button>
+            <button role="tab" aria-selected="false" data-f="same">Same level</button>
+          </div>
+        </div>
+        <div class="moves" id="moves"></div>
+      </article>
+    </section>
+
+    <section class="how" id="how">
+      <h2>How Rungs uses the graph</h2>
+      <div class="how-grid">
+        <div class="card"><b>1</b><h3>Every job is a node</h3><p>910 O*NET occupations connect to 68 skills and knowledge areas (<code>NEEDS</code>, with importance and level) and 176 in-demand tools (<code>USES</code>).</p></div>
+        <div class="card"><b>2</b><h3>Moves are edges</h3><p>15,486 <code>STEP</code> edges link jobs with overlapping skill profiles, never more than one training level up, each carrying the skill gap.</p></div>
+        <div class="card"><b>3</b><h3>Routes are paths</h3><p><code>SHORTEST 16 (me)-[:STEP]-&gt;{1,6}(goal)</code> finds stepping-stone careers (loops filtered out), ranked by the total skills you'd need to build.</p></div>
+        <div class="card"><b>4</b><h3>It's personal</h3><p>Mark skills you already have and every gap is recomputed live in Cypher: no server, all inside Relate running in this tab.</p></div>
+      </div>
+    </section>
+  </main>
+
+  <aside class="hood" id="hood" hidden aria-label="Cypher queries run by Relate">
+    <div class="hood-head">
+      <div><b>Under the hood</b><p class="sub" id="hood-stats">Every question below ran as Cypher on Relate (WebAssembly) in this tab.</p></div>
+      <button class="icon-btn" id="hood-close" aria-label="Close">✕</button>
+    </div>
+    <ol class="hood-log" id="hood-log"></ol>
+  </aside>
+
+  <footer class="foot">
+    <p>Built for the <a href="https://relate.devpost.com/" target="_blank" rel="noopener">Relate by Neo4j Hackathon</a> · <a href="https://github.com/DavidAndree/rungs" target="_blank" rel="noopener">Source on GitHub</a></p>
+    <p class="attr">This site incorporates information from <a href="https://www.onetcenter.org/database.html" target="_blank" rel="noopener">O*NET 31.0 Database</a> by the U.S. Department of Labor, Employment and Training Administration (USDOL/ETA). Used under the <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a> license. O*NET® is a trademark of USDOL/ETA. Rungs has modified all or some of this information. USDOL/ETA has not approved, endorsed, or tested these modifications.</p>
+  </footer>
+
+  <div class="tip" id="tip" role="tooltip" hidden></div>
+  <script type="module" src="js/app.js?v=2"></script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "rungs": {
+      "command": "relate",
+      "args": ["serve", "--database", "data/rungs.rl", "--read-only", "--mcp", "stdio"]
+    }
+  }
+}

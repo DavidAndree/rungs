@@ -1,0 +1,21 @@
+{
+  "name": "rungs",
+  "version": "1.0.0",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "node tests/queries.test.mjs",
+    "build": "python3 scripts/build_graph.py",
+    "serve": "cd docs && python3 -m http.server 8000"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "description": "Rungs: a career-move graph on Relate by Neo4j",
+  "type": "module",
+  "devDependencies": {
+    "@relate/relate-wasm": "^1.2.0"
+  }
+}
